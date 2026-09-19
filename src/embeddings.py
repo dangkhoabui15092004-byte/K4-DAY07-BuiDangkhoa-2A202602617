@@ -50,15 +50,22 @@ class LocalEmbedder:
 class OpenAIEmbedder:
     """OpenAI embeddings API-backed embedder."""
 
-    def __init__(self, model_name: str = OPENAI_EMBEDDING_MODEL) -> None:
+    def __init__(self, model_name: str | None = None, dimensions: int | None = None) -> None:
         from openai import OpenAI
 
-        self.model_name = model_name
-        self._backend_name = model_name
-        self.client = OpenAI()
+        resolved_model = model_name or os.getenv("OPENAI_EMBEDDING_MODEL") or OPENAI_EMBEDDING_MODEL
+        self.model_name = resolved_model
+        self._backend_name = resolved_model
+        env_dim = os.getenv("OPENAI_EMBEDDING_DIMENSIONS")
+        self.dimensions = dimensions or (int(env_dim) if env_dim and env_dim.isdigit() else None)
+        base_url = os.getenv("OPENAI_BASE_URL")
+        self.client = OpenAI(base_url=base_url) if base_url else OpenAI()
 
     def __call__(self, text: str) -> list[float]:
-        response = self.client.embeddings.create(model=self.model_name, input=text)
+        kwargs: dict = {"model": self.model_name, "input": text}
+        if self.dimensions:
+            kwargs["dimensions"] = self.dimensions
+        response = self.client.embeddings.create(**kwargs)
         return [float(value) for value in response.data[0].embedding]
 
 

@@ -4,6 +4,9 @@ import os
 import sys
 from pathlib import Path
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 from dotenv import load_dotenv
 
 from src.agent import KnowledgeBaseAgent
@@ -85,7 +88,7 @@ def run_manual_demo(question: str | None = None, sample_files: list[str] | None 
     for doc in docs:
         print(f"  - {doc.id}: {doc.metadata['source']}")
 
-    load_dotenv(override=False)
+    load_dotenv(override=True)
     provider = os.getenv(EMBEDDING_PROVIDER_ENV, "mock").strip().lower()
     if provider == "local":
         try:
